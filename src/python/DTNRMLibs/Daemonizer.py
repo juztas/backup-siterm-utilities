@@ -25,6 +25,7 @@ class Daemon(object):
         self.stderr = stderr
         self.pidfile = pidfile
         self.availableCommands = ['start', 'stop', 'restart', 'startforeground', 'status']
+        self.service = None
 
     def daemonize(self):
         """
@@ -155,6 +156,7 @@ class Daemon(object):
 
     def command(self, command, daemonName):
         """ Execute a specific command to service """
+        self.service = daemonName
         if command in self.availableCommands:
             if command == 'start':
                 self.start()

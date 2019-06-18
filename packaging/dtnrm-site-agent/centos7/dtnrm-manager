@@ -1,0 +1,70 @@
+#!/usr/bin/env python
+"""
+This part of code is taken from:
+   https://web.archive.org/web/20160305151936/http://www.jejik.com/articles/2007/02/a_simple_unix_linux_daemon_in_python/
+Please respect developer (Sander Marechal) and always keep a reference to URL and also as kudos to him
+Changes applied to this code:
+    Dedention (Justas Balcas 07/12/2017)
+    pylint fixes: with open, split imports, var names, old style class (Justas Balcas 07/12/2017)
+"""
+import sys
+import time
+import glob
+import argparse
+import importlib
+from DTNRMLibs.Daemonizer import Daemon
+from DTNRMLibs.MainUtilities import getDefaultConfigAgent
+from DTNRMAgent.DTNRMPrint import DTNRMPrint
+try:
+    import DTNRMAgent
+    if '__all__' in dir(DTNRMAgent):
+        SERVICES = DTNRMAgent.__all__
+    else:
+        print  'Warning: Seems no plugins are available. Did you installed any dtnrm plugin?'
+        SERVICES = []
+except ImportError:
+    raise ImportError('Is DTNRMAgent installed? Please refer back to documentation')
+
+class MyDaemon(Daemon):
+    """ My own Deamon override """
+    def run(self):
+        """ Run main execution """
+        method = importlib.import_module("DTNRMAgent.%s" % Daemon.service)
+        pluginexe = method.mainclass(CONFIG, LOGGER)
+        while True:
+            time.sleep(5)  # TODO Controllable. 
+            try:
+                pluginexe.start()
+            except:
+                LOGGER.critical('There was uncaught exception')
+                excType, excValue = sys.exc_info()[:2]
+                LOGGER.critical("Error details. ErrorType: %s, ErrMsg: %s" % (str(excType.__name__), excValue))
+                time.sleep(5)
+
+
+ACTIONS = ['start', 'stop', 'restart', 'startforeground', 'status']
+CONFIG, LOGGER = None, None
+
+if __name__ == "__main__":
+    PARSER = argparse.ArgumentParser(description='Data Transfer Node Service Manager for DTN Components')
+    PARSER.add_argument('action', type=str, help='Action for Service: %s' % ', '.join(ACTIONS))
+    PARSER.add_argument('service', type=str, help='Service to start. Available Services: %s' % ', '.join(SERVICES))
+    PARSER.add_argument('--sitename', default=None, help='Sitename. This requires to have /etc/dtnrmagent-##sitename##.conf file. \
+                        Useful for testing and running multiple agents on a single DTN')
+    PARSER.add_argument('--conf_file', default=None, help='Config File. Overwrite default behaviour of config file. By default \
+                        It will use /etc/dtnrmagent.conf if sitename is not set \
+                        If sitename is set, it will use /etc/dtnrmagent-##sitename##.conf \
+                        Specifying via command line overwrites default behaviour and uses file from command line')
+    ARGS = PARSER.parse_args()
+    SITE_NAME = 'default' if not ARGS.sitename else ARGS.sitename
+    CONF_FILE = '/etc/dtnrmagent.conf' if SITE_NAME == 'default' else '/etc/dtnrmagent-%s.conf' % ARGS.sitename
+    CONF_FILE = CONF_FILE if not ARGS.conf_file else ARGS.conf_file
+    DAEMON = None
+    DAEMON_PID = '/tmp/dtnrm-%s-%s.pid' % (SITE_NAME, ARGS.service)
+
+    CONFIG, LOGGER = getDefaultConfigAgent(ARGS.service, confloc=CONF_FILE)
+    DAEMON = MyDaemon(DAEMON_PID)
+    if ARGS.action in ACTIONS:
+        DAEMON.command(ARGS.action, ARGS.service)
+    else:
+        DAEMON.command('', ARGS.service)
