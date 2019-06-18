@@ -1,0 +1,83 @@
+#!/usr/bin/env python
+"""
+This part of code is taken from:
+   https://web.archive.org/web/20160305151936/http://www.jejik.com/articles/2007/02/a_simple_unix_linux_daemon_in_python/
+Please respect developer (Sander Marechal) and always keep a reference to URL and also as kudos to him
+Changes applied to this code:
+    Dedention (Justas Balcas 07/12/2017)
+    pylint fixes: with open, split imports, var names, old style class (Justas Balcas 07/12/2017)
+"""
+import os
+import sys
+import time
+import glob
+import argparse
+import importlib
+from DTNRMLibs.MainUtilities import getDefaultConfigAgent
+
+
+# TODO add install option so that plugins can be installed via github repo url
+ACTIONS = ['status', 'add', 'remove']
+
+class PluginControl(object):
+    def __init__(self, config, logger):
+        self.config = config
+        self.logger = logger
+        try:
+            with open("%s/.plugins" % self.config.get('general', 'private_dir')) as fd:
+                self.avail_plugins = fd.readlines()
+        except IOError:
+            self.avail_plugins = []
+
+    def command(self, command, plugin_name):
+        """ Execute the command for plugin action """
+        if command in ACTIONS:
+            if command == 'status':
+                self.status(plugin_name)
+            elif command == 'add':
+               self.add(plugin_name)
+               self.save() 
+            elif command == 'remove':
+                self.remove(plugin_name)
+                self.save
+            else:
+                print "Unknown command"
+                sys.exit(2)
+
+    def save(self):
+        with open("%s/.plugins" % self.config.get('general', 'private_dir'), 'w') as fd:
+            for plugin in self.avail_plugins:
+                fd.write(plugin)
+        return
+
+    def status(self, plugin_name):
+        """ Get Plugin Status """
+        print 'Available plugins: %s' % self.avail_plugins
+        if plugin_name == 'all':
+            for plugin in self.avail_plugins:
+                method = importlib.import_module("DTNRMAgent.%s" % plugin_name)
+
+    def add(self, plugin_name):
+        """ Test and add Plugin """
+        method = importlib.import_module("DTNRMAgent.%s" % plugin_name)
+        self.avail_plugins.append(plugin_name)
+        return '1'
+
+    def remove(self, plugin_name):
+        """ Remove plugin from available options """
+        self.avail_plugins.remove(plugin_name)
+        return '1'
+
+if __name__ == "__main__":
+    PARSER = argparse.ArgumentParser(description='Data Transfer Node Service Plugin Manager')
+    PARSER.add_argument('action', type=str, help='Action for Plugin management: %s' % ', '.join(ACTIONS))
+    PARSER.add_argument('plugin', type=str, help='Plugin Name. Only Status accepts "all" keyword ')
+    PARSER.add_argument('--conf_file', default=None, help='Config File. Overwrite default behaviour of config file. By default \
+                        It will use /etc/dtnrmagent.conf if sitename is not set \
+                        If sitename is set, it will use /etc/dtnrmagent-##sitename##.conf \
+                        Specifying via command line overwrites default behaviour and uses file from command line')
+    ARGS = PARSER.parse_args()
+    CONF_FILE = '/etc/dtnrm/main.conf' if not ARGS.conf_file else ARGS.conf_file
+    CONFIG, LOGGER = getDefaultConfigAgent('plugin-manager', confloc=CONF_FILE)
+    plugin_control = PluginControl(CONFIG, LOGGER)
+    plugin_control.command(ARGS.action, ARGS.plugin)    
