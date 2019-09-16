@@ -385,7 +385,7 @@ def getDefaultConfigAgent(componentName='api', configIn=None, loggerIn=None, con
     if confloc:
         configIn = configOut([confloc])
     else:
-        configIn = configOut(['/etc/dtnrmagent.conf', 'dtnrmagent.conf'])
+        configIn = configOut(['/etc/dtnrm/main.conf', 'dtnrmagent.conf'])
     createDirs("%s/%s/" % (configIn.get('general', 'logDir'), componentName))
     if not loggerIn:
         loggerIn = getLogger("%s/%s/" % (configIn.get('general', 'logDir'), componentName),
