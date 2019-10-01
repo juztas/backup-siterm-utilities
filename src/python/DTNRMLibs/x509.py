@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Custom Exceptions for Sense Site FE
+Certificate loading and validation tool
 
 Copyright 2017 California Institute of Technology
    Licensed under the Apache License, Version 2.0 (the "License");
