@@ -172,6 +172,13 @@ class HTTPResponses(object):
         headers = self._header_append(headers, head_append)
         start_response(status, headers)
 
+    def ret_401(self, content_type, start_response, head_append):
+        """ 401 Unauthorized """
+        status = '401 Unauthorized'
+        headers = [('Content-type', content_type)]
+        headers = self._header_append(headers, head_append)
+        start_response(status, headers)
+
     def ret_403(self, content_type, start_response, head_append):
         """ 403 Forbidden """
         status = '403 Forbidden'
