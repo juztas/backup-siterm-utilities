@@ -35,17 +35,15 @@ class CertHandler(object):
                 lines = fd.readlines()
             for line in lines:
                 if line.startswith('#'):
-                    print 'Ignored line %s' % line
                     continue
                 auth = line.split("|")
                 if len(auth) == 3:
                     self.allowedCerts[auth[0]] = {'username': auth[1], 'permissions': auth[2].strip()}
-                else:
-                    print 'Ignored line %s' % line
 
     def getCertInfo(self, environ):
         out = {}
         if 'SSL_CLIENT_CERT' not in environ:
+            print 'Request without certificate. Unauthorized'
             raise Exception('Unauthorized access')
         cert = crypto.load_certificate(crypto.FILETYPE_PEM, environ['SSL_CLIENT_CERT'])
         subject = cert.get_subject()
@@ -54,6 +52,7 @@ class CertHandler(object):
         out['notBefore'] = int(time.mktime(datetime.strptime(str(cert.get_notBefore()), '%Y%m%d%H%M%SZ').timetuple()))
         out['issuer'] = "".join("/{0:s}={1:s}".format(name.decode(), value.decode()) for name, value in cert.get_issuer().get_components())
         out['fullDN'] = "%s%s" % (out['issuer'], out['subject'])
+        print 'Cert Info: %s' % out
         return out
 
     def validateCertificate(self, environ):
