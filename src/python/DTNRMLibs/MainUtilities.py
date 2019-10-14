@@ -52,7 +52,7 @@ from DTNRMLibs.CustomExceptions import FailedInterfaceCommand
 from DTNRMLibs.HTTPLibrary import Requests
 
 def getUTCnow():
-    now = datetime.utcnow()
+    now = datetime.datetime.utcnow()
     timestamp = int(time.mktime(now.timetuple()))
     return timestamp
 
