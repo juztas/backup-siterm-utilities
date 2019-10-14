@@ -56,20 +56,24 @@ class CertHandler(object):
         return out
 
     def validateCertificate(self, environ):
-        now = datetime.now()
+        now = datetime.utcnow()
         timestamp = int(time.mktime(now.timetuple()))
         if 'CERTINFO' not in environ:
             raise Exception('Certificate not found. Unauthorized')
         for key in ['subject', 'notAfter', 'notBefore', 'issuer', 'fullDN']:
             if key not in environ['CERTINFO'].keys():
+                print '%s not available in certificate retrieval' % key
                 raise Exception('Unauthorized access')
         # Check time before
         if environ['CERTINFO']['notBefore'] > timestamp:
+            print 'Certificate Invalid. Current Timestamp: %s NotBefore: %s' % (timestamp, environ['CERTINFO']['notBefore'])
             raise Exception('Certificate Invalid')
         # Check time after
         if environ['CERTINFO']['notAfter'] < timestamp:
+            print 'Certificate Invalid. Current Timestamp: %s NotAfter: %s' % (timestamp, environ['CERTINFO']['notAfter'])
             raise Exception('Certificate Invalid')
         # Check DN in authorized list
         if environ['CERTINFO']['fullDN'] not in self.allowedCerts.keys():
+            print 'User DN %s is not in authorized list' % environ['CERTINFO']['fullDN']
             raise Exception('Unauthorized access')
         return self.allowedCerts[environ['CERTINFO']['fullDN']]

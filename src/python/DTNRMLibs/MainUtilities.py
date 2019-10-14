@@ -51,6 +51,10 @@ from DTNRMLibs.CustomExceptions import NotSupportedArgument
 from DTNRMLibs.CustomExceptions import FailedInterfaceCommand
 from DTNRMLibs.HTTPLibrary import Requests
 
+def getUTCnow():
+    now = datetime.utcnow()
+    timestamp = int(time.mktime(now.timetuple()))
+    return timestamp
 
 def getVal(conDict, **kwargs):
     """ Get value from configuration """
