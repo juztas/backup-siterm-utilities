@@ -380,7 +380,7 @@ def getCustomOutMsg(errMsg=None, errCode=None, msg=None, exitCode=None):
         newOut['exitCode'] = exitCode
     return newOut
 
-def getDefaultConfigAgent(componentName='api', configIn=None, loggerIn=None, confloc=None):
+def getDefaultConfigAgent(componentName='api', configIn=None, loggerIn=None, confloc=None, streamLogger=False):
     """ Get default configuration and logger for agents """
     if confloc:
         configIn = configOut([confloc])
@@ -388,11 +388,14 @@ def getDefaultConfigAgent(componentName='api', configIn=None, loggerIn=None, con
         configIn = configOut(['/etc/dtnrm/main.conf', 'dtnrmagent.conf'])
     createDirs("%s/%s/" % (configIn.get('general', 'logDir'), componentName))
     if not loggerIn:
-        loggerIn = getLogger("%s/%s/" % (configIn.get('general', 'logDir'), componentName),
-                             configIn.get('general', 'logLevel'),
-                             '%s.log' % componentName,
-                             configIn.get('general', 'rotate'),
-                             configIn.get('general', 'logbackupCount'))
+        if streamLogger:
+            loggerIn = getStreamLogger(configIn.get('general', 'logLevel'))
+        else:
+            loggerIn = getLogger("%s/%s/" % (configIn.get('general', 'logDir'), componentName),
+                                 configIn.get('general', 'logLevel'),
+                                 '%s.log' % componentName,
+                                 configIn.get('general', 'rotate'),
+                                 configIn.get('general', 'logbackupCount'))
     return configIn, loggerIn
 
 def getUrlParams(environ, paramsList):
