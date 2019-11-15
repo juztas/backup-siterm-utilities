@@ -33,6 +33,7 @@ setup(
     url="http://hep.caltech.edu",
     download_url="https://github.com/sdn-sense/dtnrm-utilities",
     keywords=['DTN-RM', 'system', 'monitor', 'SDN', 'end-to-end'],
+    install_requires=['pyOpenSSL==0.13.1'],
     package_dir={'': 'src/python/'},
     packages=['DTNRMLibs'] + list_packages(['src/python/DTNRMLibs/']),
     py_modules=get_py_modules(['src/python/DTNRMLibs']),
